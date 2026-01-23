@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduStream Pro - School Management System</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .hidden-section { display: none; }
+        .active-section { display: block; }
+        .receipt-card { background: white; padding: 2rem; border-radius: 1rem; border: 1px solid #e2e8f0; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; }
+            .receipt-card { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; }
+        }
+        
+        /* Custom Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@firebase/app": "https://esm.sh/@firebase/app@^0.14.7",
+    "@firebase/auth": "https://esm.sh/@firebase/auth@^1.12.0",
+    "@firebase/analytics": "https://esm.sh/@firebase/analytics@^0.10.19"
+  }
+}
+</script>
+</head>
+<body class="antialiased">
+
+    <!-- NAVIGATION BAR -->
+    <nav id="navbar" class="no-print bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('home')">
+                    <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    </div>
+                    <span id="navSchoolName" class="text-xl font-extrabold tracking-tight text-slate-800">School Admin</span>
+                </div>
+                <div id="navLinks" class="flex items-center gap-4">
+                    <button onclick="showSection('login')" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition px-4 py-2">Staff Portal</button>
+                    <button id="logoutBtn" onclick="appLogout()" class="hidden bg-slate-100 text-slate-600 px-5 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- LOADING SPINNER -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/80 z-[100] flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 font-bold text-slate-600 tracking-wide">Processing...</p>
+        </div>
+    </div>
+
+    <!-- MAIN SECTIONS CONTAINER -->
+    <main id="mainContent" class="max-w-7xl mx-auto p-4 sm:p-8">
+        
+        <!-- 1. HOME SECTION -->
+        <section id="homeSection" class="active-section space-y-16 py-12 animate-fade">
+            <div class="text-center max-w-3xl mx-auto space-y-6">
+                <img id="homeLogo" src="https://via.placeholder.com/150" class="h-32 w-32 mx-auto rounded-3xl shadow-xl object-cover bg-white p-2">
+                <h1 id="homeSchoolName" class="text-5xl font-black text-slate-900 tracking-tighter">Welcome to Our School</h1>
+                <p id="homeAddress" class="text-lg text-slate-500 font-medium">Educational Excellence since 1995</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div onclick="showSection('admission')" class="p-8 bg-white border-2 border-slate-50 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all group cursor-pointer text-center">
+                    <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">📄</div>
+                    <h3 class="text-2xl font-bold mb-2">Admission Form</h3>
+                    <p class="text-slate-400 font-medium text-sm">Enroll a new student online</p>
+                </div>
+                <div onclick="showSection('login')" class="p-8 bg-white border-2 border-slate-50 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-green-100 transition-all group cursor-pointer text-center">
+                    <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">👨‍🏫</div>
+                    <h3 class="text-2xl font-bold mb-2">Teacher Login</h3>
+                    <p class="text-slate-400 font-medium text-sm">Mark attendance & collect fees</p>
+                </div>
+                <div onclick="showSection('login')" class="p-8 bg-white border-2 border-slate-50 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-purple-100 transition-all group cursor-pointer text-center">
+                    <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">⚙️</div>
+                    <h3 class="text-2xl font-bold mb-2">Admin Login</h3>
+                    <p class="text-slate-400 font-medium text-sm">Full school management</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. LOGIN SECTION -->
+        <section id="loginSection" class="hidden-section max-w-md mx-auto py-20 animate-fade">
+            <div class="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-white space-y-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 h-2 w-full bg-blue-600"></div>
+                <div class="text-center">
+                    <h2 class="text-3xl font-black tracking-tight">Staff Portal</h2>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Sign in to continue</p>
+                </div>
+                <div class="space-y-4">
+                    <input id="loginEmail" type="email" placeholder="Email Address" class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-blue-600 outline-none font-bold transition">
+                    <input id="loginPass" type="password" placeholder="Password" class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-blue-600 outline-none font-bold transition">
+                </div>
+                <button onclick="appLogin()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition">Authorize Access</button>
+            </div>
+        </section>
+
+        <!-- 3. PUBLIC ADMISSION SECTION -->
+        <section id="admissionSection" class="hidden-section max-w-4xl mx-auto py-12 animate-fade">
+            <div class="bg-white p-8 sm:p-12 rounded-[3rem] shadow-2xl border-4 border-white">
+                <h2 class="text-4xl font-black mb-10 tracking-tight">Student Admission</h2>
+                <form id="admissionForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Basic Details -->
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Full Name</label>
+                        <input name="name" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Class</label>
+                        <select name="class" id="admissionClassSelect" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold appearance-none transition">
+                            <option value="">Select Class</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Father's Name</label>
+                        <input name="fatherName" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Mother's Name</label>
+                        <input name="motherName" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">DOB</label>
+                        <input name="dob" type="date" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Mobile Number</label>
+                        <input name="mobile" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                    </div>
+
+                    <!-- File Uploads -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
+                        <div class="relative p-6 border-2 border-dashed border-slate-200 rounded-[2rem] text-center bg-slate-50">
+                            <input type="file" id="photoFile" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewFile(this, 'photoPreview')">
+                            <div id="photoPreview" class="hidden h-32 w-32 mx-auto rounded-2xl object-cover border-4 border-white shadow-lg mb-2"></div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mt-2">Student Photo (Max 500KB)</p>
+                        </div>
+                        <div class="relative p-6 border-2 border-dashed border-slate-200 rounded-[2rem] text-center bg-slate-50">
+                            <input type="file" id="aadhaarFile" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewFile(this, 'aadhaarPreview')">
+                            <div id="aadhaarPreview" class="hidden h-32 w-48 mx-auto rounded-2xl object-contain border-4 border-white shadow-lg mb-2"></div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mt-2">Aadhaar Card Photo (Max 500KB)</p>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 pt-6">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-xl shadow-2xl hover:bg-blue-700 active:scale-[0.98] transition">Submit Enrollment</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 4. ADMIN DASHBOARD SECTION -->
+        <section id="adminSection" class="hidden-section space-y-12 animate-fade">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <h2 class="text-4xl font-black tracking-tight">Admin Dashboard</h2>
+                <div class="flex gap-2 bg-white p-1.5 rounded-2xl shadow-sm border">
+                    <button onclick="adminTab('students')" id="tab_students" class="px-6 py-2.5 rounded-xl text-sm font-black transition bg-blue-600 text-white">Students</button>
+                    <button onclick="adminTab('classes')" id="tab_classes" class="px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400">Classes</button>
+                    <button onclick="adminTab('teachers')" id="tab_teachers" class="px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400">Staff</button>
+                    <button onclick="adminTab('settings')" id="tab_settings" class="px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400">Settings</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content Areas -->
+            <div id="adminContent">
+                <!-- Content injected dynamically -->
+            </div>
+        </section>
+
+        <!-- 5. TEACHER DASHBOARD SECTION -->
+        <section id="teacherSection" class="hidden-section space-y-12 animate-fade">
+            <h2 class="text-4xl font-black tracking-tight">Teacher Console</h2>
+            <div id="teacherContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Students cards here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- RECEIPT VIEW (PRINTABLE) -->
+    <div id="receiptSection" class="print-only hidden p-10 bg-white">
+        <!-- Injected dynamically -->
+    </div>
+
+    <!-- FIREBASE MODULE SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, onSnapshot, query, where, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+        // --- 1. FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwaZLKQpA7Ccr02kIcgO84pug5P9_BnLU",
+            authDomain: "schooldemo-61665.firebaseapp.com",
+            projectId: "schooldemo-61665",
+            storageBucket: "schooldemo-61665.firebasestorage.app",
+            messagingSenderId: "24122897182",
+            appId: "1:24122897182:web:bf41a51bc921e4b8db4f0f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // --- 2. GLOBAL STATE ---
+        let currentUserProfile = null;
+        let schoolSettings = {};
+        let activeAdminTab = 'students';
+        let studentsList = [];
+        let classesList = [];
+        let teachersList = [];
+
+        // --- 3. UI CONTROLS ---
+        window.showSection = (sectionId) => {
+            const sections = ['home', 'login', 'admission', 'admin', 'teacher'];
+            sections.forEach(s => {
+                const el = document.getElementById(`${s}Section`);
+                if (el) el.style.display = (s === sectionId) ? 'block' : 'none';
+            });
+            window.scrollTo(0, 0);
+        };
+
+        const toggleLoading = (show) => {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        };
+
+        window.previewFile = (input, previewId) => {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 500 * 1024) {
+                alert("Only images up to 500KB are allowed");
+                input.value = "";
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById(previewId);
+                preview.style.backgroundImage = `url(${e.target.result})`;
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // --- 4. AUTH & USER MANAGEMENT ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const uDoc = await getDocs(query(collection(db, "users"), where("uid", "==", user.uid)));
+                if (!uDoc.empty) {
+                    currentUserProfile = uDoc.docs[0].data();
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    if (currentUserProfile.role === 'admin') showSection('admin');
+                    else showSection('teacher');
+                }
+            } else {
+                currentUserProfile = null;
+                document.getElementById('logoutBtn').classList.add('hidden');
+                showSection('home');
+            }
+        });
+
+        window.appLogin = async () => {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            if (!email || !pass) return alert("Enter credentials");
+            toggleLoading(true);
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                alert("Login Failed: " + err.message);
+            } finally {
+                toggleLoading(false);
+            }
+        };
+
+        window.appLogout = () => signOut(auth);
+
+        // --- 5. DATA FETCHING ---
+        const initAppData = () => {
+            // Watch settings
+            onSnapshot(doc(db, "config", "school"), (doc) => {
+                if (doc.exists()) {
+                    schoolSettings = doc.data();
+                    document.getElementById('navSchoolName').innerText = schoolSettings.name || 'School Admin';
+                    document.getElementById('homeSchoolName').innerText = schoolSettings.name || 'Our School';
+                    document.getElementById('homeAddress').innerText = schoolSettings.address || '';
+                    if (schoolSettings.logoUrl) document.getElementById('homeLogo').src = schoolSettings.logoUrl;
+                }
+            });
+
+            // Watch Classes
+            onSnapshot(collection(db, "classes"), (snap) => {
+                classesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const select = document.getElementById('admissionClassSelect');
+                select.innerHTML = '<option value="">Select Class</option>';
+                classesList.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.innerText = c.id;
+                    select.appendChild(opt);
+                });
+                if (activeAdminTab === 'classes') renderClasses();
+            });
+
+            // Watch Students
+            onSnapshot(query(collection(db, "students"), orderBy("createdAt", "desc")), (snap) => {
+                studentsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (activeAdminTab === 'students') renderStudents();
+                renderTeacherView();
+            });
+
+            // Watch Teachers
+            onSnapshot(query(collection(db, "users"), where("role", "==", "teacher")), (snap) => {
+                teachersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (activeAdminTab === 'teachers') renderTeachers();
+            });
+        };
+
+        // --- 6. ADMISSION LOGIC ---
+        document.getElementById('admissionForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            const photoFile = document.getElementById('photoFile').files[0];
+            const aadhaarFile = document.getElementById('aadhaarFile').files[0];
+
+            if (!photoFile || !aadhaarFile) return alert("Please upload photos");
+
+            toggleLoading(true);
+            try {
+                const ts = Date.now();
+                const studentId = "STD" + ts;
+                
+                // Upload Storage
+                const pRef = ref(storage, `students/${studentId}_photo_${ts}`);
+                const aRef = ref(storage, `students/${studentId}_aadhaar_${ts}`);
+                
+                const [pSnap, aSnap] = await Promise.all([
+                    uploadBytes(pRef, photoFile),
+                    uploadBytes(aRef, aadhaarFile)
+                ]);
+
+                const [pUrl, aUrl] = await Promise.all([
+                    getDownloadURL(pSnap.ref),
+                    getDownloadURL(aSnap.ref)
+                ]);
+
+                // Save Firestore
+                await addDoc(collection(db, "students"), {
+                    ...data,
+                    studentId,
+                    photoUrl: pUrl,
+                    aadhaarUrl: aUrl,
+                    totalPaid: 0,
+                    feeHistory: [],
+                    createdAt: new Date().toISOString()
+                });
+
+                alert("Admission Submitted Successfully!");
+                e.target.reset();
+                showSection('home');
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                toggleLoading(false);
+            }
+        };
+
+        // --- 7. ADMIN TAB RENDERING ---
+        window.adminTab = (tabId) => {
+            activeAdminTab = tabId;
+            ['students', 'classes', 'teachers', 'settings'].forEach(t => {
+                const btn = document.getElementById(`tab_${t}`);
+                btn.className = (t === tabId) ? 
+                    'px-6 py-2.5 rounded-xl text-sm font-black transition bg-blue-600 text-white shadow-lg' : 
+                    'px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400';
+            });
+            renderAdminContent();
+        };
+
+        const renderAdminContent = () => {
+            const container = document.getElementById('adminContent');
+            if (activeAdminTab === 'students') renderStudents();
+            else if (activeAdminTab === 'classes') renderClasses();
+            else if (activeAdminTab === 'teachers') renderTeachers();
+            else if (activeAdminTab === 'settings') renderSettings();
+        };
+
+        const renderStudents = () => {
+            const container = document.getElementById('adminContent');
+            container.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${studentsList.map(s => `
+                        <div class="bg-white p-6 rounded-[2rem] border shadow-sm hover:shadow-xl transition">
+                            <div class="flex gap-4 items-center mb-6">
+                                <img src="${s.photoUrl}" class="h-16 w-16 rounded-2xl object-cover border-4 border-slate-50 shadow-sm">
+                                <div>
+                                    <h4 class="font-black text-lg">${s.name}</h4>
+                                    <p class="text-[10px] font-black uppercase text-blue-600 tracking-widest">${s.class}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-6 text-sm font-bold text-slate-500">
+                                <div class="flex justify-between"><span>Paid:</span><span class="text-green-600">₹${s.totalPaid}</span></div>
+                                <div class="flex justify-between"><span>Mobile:</span><span>${s.mobile}</span></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="printBill('${s.id}')" class="flex-1 bg-slate-50 py-3 rounded-xl font-black text-xs hover:bg-slate-100 transition">Print Statement</button>
+                                <button onclick="deleteStudent('${s.id}')" class="bg-red-50 text-red-600 px-4 rounded-xl">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        const renderClasses = () => {
+            const container = document.getElementById('adminContent');
+            container.innerHTML = `
+                <div class="space-y-8">
+                    <form id="classForm" class="bg-white p-8 rounded-[2rem] border shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Class Name</label>
+                            <input name="id" required placeholder="e.g. 10th-A" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Admission Fee</label>
+                            <input name="admFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Monthly Fee</label>
+                            <input name="monFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm">
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-sm shadow-lg">Save Class</button>
+                    </form>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        ${classesList.map(c => `
+                            <div class="bg-white p-6 rounded-[2rem] border shadow-sm">
+                                <h4 class="font-black text-xl mb-4">${c.id}</h4>
+                                <div class="text-xs space-y-2 font-bold text-slate-400">
+                                    <div class="flex justify-between">Admission: <span class="text-slate-900">₹${c.admissionFee}</span></div>
+                                    <div class="flex justify-between">Monthly: <span class="text-slate-900">₹${c.monthlyFee}</span></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('classForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const d = Object.fromEntries(new FormData(e.target).entries());
+                await setDoc(doc(db, "classes", d.id), { admissionFee: Number(d.admFee), monthlyFee: Number(d.monFee) });
+                alert("Class Saved");
+            };
+        };
+
+        const renderTeachers = () => {
+            const container = document.getElementById('adminContent');
+            container.innerHTML = `
+                <div class="space-y-8">
+                    <form id="teacherForm" class="bg-white p-8 rounded-[2rem] border shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Name</label><input name="name" required class="w-full p-3 bg-slate-50 rounded-xl font-bold"></div>
+                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Email</label><input name="email" required type="email" class="w-full p-3 bg-slate-50 rounded-xl font-bold"></div>
+                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Password</label><input name="pass" required type="password" class="w-full p-3 bg-slate-50 rounded-xl font-bold"></div>
+                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-sm shadow-lg">Create Staff</button>
+                    </form>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${teachersList.map(t => `
+                            <div class="bg-white p-6 rounded-[2rem] border shadow-sm flex justify-between items-center">
+                                <div><h4 class="font-black text-lg">${t.name}</h4><p class="text-xs text-slate-400 font-bold">${t.email}</p></div>
+                                <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full">Active</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('teacherForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const d = Object.fromEntries(new FormData(e.target).entries());
+                toggleLoading(true);
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, d.email, d.pass);
+                    await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name: d.name, email: d.email, role: 'teacher', active: true });
+                    alert("Teacher Created Successfully");
+                } catch(err) { alert(err.message); } finally { toggleLoading(false); }
+            };
+        };
+
+        const renderSettings = () => {
+            const container = document.getElementById('adminContent');
+            container.innerHTML = `
+                <div class="bg-white p-10 rounded-[2.5rem] border shadow-sm max-w-2xl mx-auto space-y-8">
+                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">School Name</label><input id="set_name" value="${schoolSettings.name || ''}" class="w-full p-4 bg-slate-50 rounded-2xl font-bold"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Address</label><textarea id="set_addr" class="w-full p-4 bg-slate-50 rounded-2xl font-bold h-24">${schoolSettings.address || ''}</textarea></div>
+                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Principal Name</label><input id="set_prin" value="${schoolSettings.principalName || ''}" class="w-full p-4 bg-slate-50 rounded-2xl font-bold"></div>
+                    <button onclick="saveSchoolSettings()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl">Update Identity</button>
+                </div>
+            `;
+        };
+
+        window.saveSchoolSettings = async () => {
+            const payload = {
+                name: document.getElementById('set_name').value,
+                address: document.getElementById('set_addr').value,
+                principalName: document.getElementById('set_prin').value,
+                principalSignatureUrl: '',
+                logoUrl: ''
+            };
+            await setDoc(doc(db, "config", "school"), payload);
+            alert("Settings Updated");
+        };
+
+        // --- 8. TEACHER DASHBOARD ---
+        const renderTeacherView = () => {
+            const container = document.getElementById('teacherContent');
+            if (!container) return;
+            container.innerHTML = studentsList.map(s => `
+                <div class="bg-white p-6 rounded-[2rem] border shadow-sm hover:shadow-xl transition">
+                    <div class="flex gap-4 items-center mb-6">
+                        <img src="${s.photoUrl}" class="h-16 w-16 rounded-2xl object-cover border-4 border-slate-50 shadow-sm">
+                        <div><h4 class="font-black text-lg">${s.name}</h4><p class="text-[10px] font-black uppercase text-blue-600 tracking-widest">${s.class}</p></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Balance</span><span class="text-xl font-black text-slate-900">₹${s.totalPaid}</span></div>
+                        <button onclick="addPaymentModal('${s.id}')" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-xs hover:bg-blue-700 shadow-lg transition">Collect Monthly Fee</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        window.addPaymentModal = async (sId) => {
+            const amount = prompt("Enter Monthly Fee Amount:");
+            if (!amount || isNaN(amount)) return;
+            const sDoc = doc(db, "students", sId);
+            const student = studentsList.find(x => x.id === sId);
+            const newTotal = (student.totalPaid || 0) + Number(amount);
+            const history = student.feeHistory || [];
+            history.push({ amount: Number(amount), date: new Date().toISOString(), type: 'monthly' });
+            await updateDoc(sDoc, { totalPaid: newTotal, feeHistory: history });
+            alert("Payment Recorded!");
+        };
+
+        // --- 9. PRINT ENGINE ---
+        window.printBill = (sId) => {
+            const s = studentsList.find(x => x.id === sId);
+            const container = document.getElementById('receiptSection');
+            container.innerHTML = `
+                <div class="receipt-card max-w-2xl mx-auto">
+                    <div class="flex justify-between border-b-4 border-slate-900 pb-6 mb-8">
+                        <div>
+                            <h1 class="text-3xl font-black uppercase">${schoolSettings.name}</h1>
+                            <p class="text-sm font-bold text-slate-500">${schoolSettings.address}</p>
+                        </div>
+                        <div class="text-right">
+                            <h2 class="text-xl font-black text-slate-400 uppercase tracking-widest">Receipt</h2>
+                            <p class="text-xs font-bold">No: ${s.studentId}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-8 mb-10">
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Student Details</p>
+                            <h4 class="text-xl font-black">${s.name}</h4>
+                            <p class="text-sm font-bold text-slate-500">Class: ${s.class}</p>
+                            <p class="text-sm font-bold text-slate-500">Father: ${s.fatherName}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total Paid</p>
+                            <h4 class="text-4xl font-black">₹${s.totalPaid}</h4>
+                        </div>
+                    </div>
+                    <table class="w-full mb-10">
+                        <thead>
+                            <tr class="border-y text-left text-[10px] font-black text-slate-400 uppercase">
+                                <th class="py-2">Description</th>
+                                <th class="py-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            ${s.feeHistory.map(h => `
+                                <tr class="text-sm">
+                                    <td class="py-3 font-bold">${h.type.toUpperCase()} FEE (${h.date.split('T')[0]})</td>
+                                    <td class="py-3 text-right font-black">₹${h.amount}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="flex justify-between items-end mt-20">
+                        <div class="text-[9px] text-slate-400 italic">This is a computer generated document.</div>
+                        <div class="text-center w-48 border-t-2 border-slate-900 pt-1">
+                            <p class="font-black text-sm uppercase">${schoolSettings.principalName}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Principal</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.print();
+        };
+
+        window.deleteStudent = async (id) => {
+            if (confirm("Permanently delete this student?")) {
+                await deleteDoc(doc(db, "students", id));
+            }
+        };
+
+        // --- INIT ---
+        initAppData();
+
+    </script>
+</body>
+</html>
