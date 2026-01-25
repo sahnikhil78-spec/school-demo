@@ -49,8 +49,7 @@
             padding: 1rem;
             border-radius: 1.5rem;
             border: 1px solid #e2e8f0;
-            display: flex;
-            gap: 1rem;
+            display: flex; gap: 1rem;
             flex-wrap: wrap;
             margin-bottom: 2rem;
         }
@@ -61,6 +60,50 @@
         }
         .notice-card:hover {
             transform: translateX(5px);
+        }
+
+        /* Custom File Input Styling */
+        .file-upload-box {
+            position: relative;
+            height: 120px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .file-upload-box:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .file-upload-box input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .preview-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .doc-preview-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: #f8fafc;
+            transition: transform 0.2s;
+        }
+        .doc-preview-container:hover {
+            transform: scale(1.02);
         }
     </style>
 </head>
@@ -88,16 +131,16 @@
     <div id="loadingOverlay" class="fixed inset-0 bg-white/80 z-[100] flex items-center justify-center hidden">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p class="mt-4 font-bold text-slate-600 tracking-wide">Processing...</p>
+            <p id="loadingMessage" class="mt-4 font-bold text-slate-600 tracking-wide">Processing...</p>
         </div>
     </div>
 
     <!-- STUDENT FEE DETAILS MODAL -->
     <div id="feeModal" class="fixed inset-0 z-[110] flex items-center justify-center hidden modal-backdrop no-print">
-        <div class="bg-white w-full max-w-4xl mx-4 p-8 rounded-[2.5rem] shadow-2xl animate-fade relative overflow-y-auto max-h-[90vh]">
+        <div class="bg-white w-full max-w-5xl mx-4 p-8 rounded-[2.5rem] shadow-2xl animate-fade relative overflow-y-auto max-h-[90vh]">
             <button onclick="closeFeeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
-            <h2 class="text-3xl font-black mb-4 tracking-tight">Student Fee Structure</h2>
-            <div id="feeModalContent" class="space-y-6">
+            <h2 class="text-3xl font-black mb-4 tracking-tight">Student Profile & Documents</h2>
+            <div id="feeModalContent" class="space-y-8">
                 <!-- Content injected here -->
             </div>
         </div>
@@ -145,7 +188,7 @@
         </div>
     </div>
 
-    <!-- EDIT MODAL -->
+    <!-- STUDENT EDIT MODAL -->
     <div id="editModal" class="fixed inset-0 z-[110] flex items-center justify-center hidden modal-backdrop no-print">
         <div class="bg-white w-full max-w-2xl mx-4 p-8 rounded-[2.5rem] shadow-2xl animate-fade relative overflow-y-auto max-h-[90vh]">
             <button onclick="closeEditModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
@@ -191,6 +234,26 @@
         </div>
     </div>
 
+    <!-- STAFF EDIT MODAL -->
+    <div id="editStaffModal" class="fixed inset-0 z-[110] flex items-center justify-center hidden modal-backdrop no-print">
+        <div class="bg-white w-full max-w-md mx-4 p-8 rounded-[2.5rem] shadow-2xl animate-fade relative overflow-y-auto">
+            <button onclick="closeEditStaffModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
+            <h2 class="text-3xl font-black mb-8 tracking-tight">Edit Staff Details</h2>
+            <form id="editStaffForm" class="space-y-6">
+                <input type="hidden" name="id">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Staff Name</label>
+                    <input name="name" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 text-slate-300">Email Address (Read-only)</label>
+                    <input name="email" readonly class="w-full p-4 bg-slate-100 border-2 border-transparent rounded-2xl outline-none font-bold transition text-slate-400 cursor-not-allowed">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition">Update Profile</button>
+            </form>
+        </div>
+    </div>
+
     <!-- MAIN CONTENT -->
     <main id="mainContent" class="max-w-7xl mx-auto p-4 sm:p-8 no-print">
         
@@ -200,6 +263,11 @@
                 <img id="homeLogo" src="https://via.placeholder.com/150" class="h-32 w-32 mx-auto rounded-3xl shadow-xl object-cover bg-white p-2" alt="Logo">
                 <h1 id="homeSchoolName" class="text-5xl font-black text-slate-900 tracking-tighter">Welcome to Our School</h1>
                 <p id="homeAddress" class="text-lg text-slate-500 font-medium">Educational Excellence</p>
+                <!-- HELPLINE DISPLAY -->
+                <div id="homeHelplineBox" class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-2 rounded-full font-bold text-sm">
+                    <span>📞 Helpline:</span>
+                    <span id="homeHelpline">9999999999</span>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -285,6 +353,44 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- DOCUMENT UPLOADS -->
+                    <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Student Photo</label>
+                            <div class="file-upload-box" onclick="this.querySelector('input').click()">
+                                <img id="photoPreview" class="preview-img">
+                                <div class="text-center p-4">
+                                    <span class="text-2xl">📸</span>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Upload Photo</p>
+                                </div>
+                                <input type="file" id="studentPhotoInput" accept="image/*" onchange="previewFile(this, 'photoPreview')" required>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Student Aadhaar</label>
+                            <div class="file-upload-box" onclick="this.querySelector('input').click()">
+                                <img id="aadhaarPreview" class="preview-img">
+                                <div class="text-center p-4">
+                                    <span class="text-2xl">🆔</span>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Aadhaar Card</p>
+                                </div>
+                                <input type="file" id="studentAadhaarInput" accept="image/*" onchange="previewFile(this, 'aadhaarPreview')" required>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Parent Aadhaar</label>
+                            <div class="file-upload-box" onclick="this.querySelector('input').click()">
+                                <img id="parentAadhaarPreview" class="preview-img">
+                                <div class=\"text-center p-4\">
+                                    <span class=\"text-2xl\">👤</span>
+                                    <p class=\"text-[10px] font-bold text-slate-400 uppercase mt-1\">Parent Aadhaar</p>
+                                </div>
+                                <input type="file" id="parentAadhaarInput" accept="image/*" onchange="previewFile(this, 'parentAadhaarPreview')" required>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="space-y-1">
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Father's Name</label>
                         <input name="fatherName" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
@@ -325,7 +431,7 @@
                 </div>
             </div>
 
-            <!-- Filters Area (Students Only) -->
+            <!-- Filters Area -->
             <div id="studentFilters" class="hidden filter-bar">
                 <div class="flex-1 min-w-[150px]">
                     <label class="text-[9px] font-black uppercase text-slate-400 block mb-1">Academic Year</label>
@@ -360,7 +466,7 @@
 
     </main>
 
-    <!-- RECEIPT SECTION (PRINT ONLY) -->
+    <!-- RECEIPT SECTION -->
     <div id="receiptSection" class="print-only p-10 bg-white"></div>
 
     <!-- FIREBASE AND APP LOGIC -->
@@ -383,6 +489,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // IMGBB CONFIG
+        const IMGBB_API_KEY = "4f428b71370b15b7e743a1667f47a025";
+
         // Academic Year Generator
         const getAcademicYears = () => {
             const currentYear = new Date().getFullYear();
@@ -404,7 +513,7 @@
 
         // Global State
         let currentUserProfile = null;
-        let schoolSettings = { name: 'School Admin', address: 'Educational Excellence', principalName: 'Principal' };
+        let schoolSettings = { name: 'School Admin', address: 'Educational Excellence', principalName: 'Principal', helpline: '9999999999', logoUrl: 'https://via.placeholder.com/150' };
         let studentsList = [];
         let classesList = [];
         let teachersList = [];
@@ -424,20 +533,52 @@
             window.scrollTo(0, 0);
         };
 
-        const toggleLoading = (show) => {
-            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        const toggleLoading = (show, message = "Processing...") => {
+            const msgEl = document.getElementById('loadingMessage');
+            if (msgEl) msgEl.innerText = message;
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = show ? 'flex' : 'none';
         };
 
-        window.closeEditModal = () => {
-            document.getElementById('editModal').classList.add('hidden');
+        window.closeEditModal = () => document.getElementById('editModal').classList.add('hidden');
+        window.closeEditStaffModal = () => document.getElementById('editStaffModal').classList.add('hidden');
+        window.closeFeeModal = () => document.getElementById('feeModal').classList.add('hidden');
+        window.closeCollectFeeModal = () => document.getElementById('collectFeeModal').classList.add('hidden');
+
+        window.previewFile = (input, previewId) => {
+            const file = input.files[0];
+            const preview = document.getElementById(previewId);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
         };
 
-        window.closeFeeModal = () => {
-            document.getElementById('feeModal').classList.add('hidden');
-        };
-
-        window.closeCollectFeeModal = () => {
-            document.getElementById('collectFeeModal').classList.add('hidden');
+        // ImgBB Upload Helper
+        const uploadToImgBB = async (file) => {
+            if (!file) return null;
+            const formData = new FormData();
+            formData.append("image", file);
+            
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    return result.data.url;
+                } else {
+                    throw new Error(result.error.message);
+                }
+            } catch (err) {
+                console.error("ImgBB Upload Error:", err);
+                return null;
+            }
         };
 
         window.toggleMonthSelect = () => {
@@ -445,7 +586,6 @@
             const group = document.getElementById('monthSelectGroup');
             group.style.display = type === 'monthly' ? 'block' : 'none';
             
-            // Set default amount based on type
             const studentId = document.querySelector('#paymentForm input[name="studentId"]').value;
             const s = studentsList.find(x => x.id === studentId);
             const c = classesList.find(x => x.id === s.class);
@@ -458,24 +598,17 @@
             }
         };
 
-        // Populate Years in Forms and Filters
+        // Populate Years
         const populateYears = () => {
             const years = getAcademicYears();
-            const yearSelects = [
-                'admissionYearSelect', 
-                'editYearSelect', 
-                'filterYear', 
-                'teacherFilterYear'
-            ];
-            
+            const yearSelects = ['admissionYearSelect', 'editYearSelect', 'filterYear', 'teacherFilterYear'];
             yearSelects.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     let options = id.startsWith('filter') || id.startsWith('teacher') ? '<option value="All">All Years</option>' : '';
                     options += years.map(y => `<option value="${y}" ${y === currentYearStr ? 'selected' : ''}>${y}</option>`).join('');
                     el.innerHTML = options;
-                    // Default filter to current academic year
-                    if (id.startsWith('filter') || id.startsWith('teacher')) el.value = currentYearStr;
+                    if ((id.startsWith('filter') || id.startsWith('teacher')) && !el.value) el.value = currentYearStr;
                 }
             });
         };
@@ -483,19 +616,14 @@
         window.updateAdmissionFeeDisplay = () => {
             const classId = document.getElementById('admissionClassSelect').value;
             const box = document.getElementById('feeDisplayBox');
-            if (!classId) {
-                box.classList.add('hidden');
-                return;
-            }
+            if (!classId) { box.classList.add('hidden'); return; }
             const c = classesList.find(x => x.id === classId);
             if (c) {
                 document.getElementById('dispAdmFee').innerText = `₹${c.admissionFee}`;
                 document.getElementById('dispReAdmFee').innerText = `₹${c.reAdmissionFee || 0}`;
                 document.getElementById('dispMonFee').innerText = `₹${c.monthlyFee}`;
                 box.classList.remove('hidden');
-            } else {
-                box.classList.add('hidden');
-            }
+            } else { box.classList.add('hidden'); }
         };
 
         // Auth Logic
@@ -522,42 +650,30 @@
             e.preventDefault();
             const email = e.target.email.value;
             const pass = e.target.pass.value;
-            toggleLoading(true);
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                alert("Login Failed: " + err.message);
-            } finally {
-                toggleLoading(false);
-            }
+            toggleLoading(true, "Verifying credentials...");
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (err) { alert("Login Failed: " + err.message); } 
+            finally { toggleLoading(false); }
         };
 
-        // Data Management
+        // Data Sync
         const initDataSync = () => {
             populateYears();
-
-            // Settings
             onSnapshot(doc(db, "config", "school"), (docSnap) => {
                 if (docSnap.exists()) {
                     schoolSettings = docSnap.data();
                     document.getElementById('navSchoolName').innerText = schoolSettings.name;
                     document.getElementById('homeSchoolName').innerText = schoolSettings.name;
                     document.getElementById('homeAddress').innerText = schoolSettings.address;
+                    document.getElementById('homeHelpline').innerText = schoolSettings.helpline || '9999999999';
                     if (schoolSettings.logoUrl) document.getElementById('homeLogo').src = schoolSettings.logoUrl;
                 }
+                if (activeAdminTab === 'settings') renderAdminContent();
             });
 
-            // Classes
             onSnapshot(collection(db, "classes"), (snap) => {
                 classesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                
-                const selects = [
-                    'admissionClassSelect', 
-                    'editClassSelect', 
-                    'filterClass', 
-                    'teacherFilterClass'
-                ];
-                
+                const selects = ['admissionClassSelect', 'editClassSelect', 'filterClass', 'teacherFilterClass'];
                 selects.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
@@ -566,25 +682,21 @@
                         el.innerHTML = options;
                     }
                 });
-
                 if (activeAdminTab === 'classes') renderAdminContent();
             });
 
-            // Students
             onSnapshot(query(collection(db, "students"), orderBy("createdAt", "desc")), (snap) => {
                 studentsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if (activeAdminTab === 'students') renderAdminContent();
                 renderTeacherContent();
             });
 
-            // Notices
             onSnapshot(query(collection(db, "notices"), orderBy("date", "desc")), (snap) => {
                 noticesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderHomeNotices();
                 if (activeAdminTab === 'notices') renderAdminContent();
             });
 
-            // Teachers
             onSnapshot(query(collection(db, "users"), where("role", "==", "teacher")), (snap) => {
                 teachersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if (activeAdminTab === 'teachers') renderAdminContent();
@@ -593,84 +705,140 @@
 
         const renderHomeNotices = () => {
             const list = document.getElementById('homeNoticeList');
-            if (noticesList.length === 0) {
-                list.innerHTML = `<p class="text-slate-400 font-bold italic">No active notices at the moment.</p>`;
-                return;
-            }
-            list.innerHTML = noticesList.map(n => `
-                <div class="bg-white p-6 rounded-2xl shadow-sm notice-card border border-slate-100">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xl font-bold text-slate-800">${n.title}</h4>
-                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">${n.date}</span>
-                    </div>
-                    <p class="text-slate-600 font-medium leading-relaxed whitespace-pre-line">${n.description}</p>
-                </div>
-            `).join('');
+            if (!list) return;
+            if (noticesList.length === 0) { list.innerHTML = `<p class="text-slate-400 font-bold italic">No active notices.</p>`; return; }
+            list.innerHTML = noticesList.map(n => `<div class="bg-white p-6 rounded-2xl shadow-sm notice-card border border-slate-100"><div class="flex justify-between items-start mb-2"><h4 class="text-xl font-bold text-slate-800">${n.title}</h4><span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">${n.date}</span></div><p class="text-slate-600 font-medium whitespace-pre-line">${n.description}</p></div>`).join('');
         };
 
-        // Admission Submission
+        // Admission Submission FIX
         document.getElementById('admissionForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
+            const form = e.target;
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            toggleLoading(true);
+            
+            const photoInput = document.getElementById('studentPhotoInput');
+            const aadhaarInput = document.getElementById('studentAadhaarInput');
+            const parentAadhaarInput = document.getElementById('parentAadhaarInput');
+
+            const photoFile = photoInput.files[0];
+            const aadhaarFile = aadhaarInput.files[0];
+            const parentAadhaarFile = parentAadhaarInput.files[0];
+
+            if(!photoFile || !aadhaarFile || !parentAadhaarFile) {
+                alert("Please upload all required documents (Photo and Aadhaar cards).");
+                return;
+            }
+
+            toggleLoading(true, "Uploading documents to ImgBB...");
             try {
+                const photoUrl = await uploadToImgBB(photoFile);
+                toggleLoading(true, "Uploading Student Aadhaar...");
+                const studentAadhaarUrl = await uploadToImgBB(aadhaarFile);
+                toggleLoading(true, "Uploading Parent Aadhaar...");
+                const parentAadhaarUrl = await uploadToImgBB(parentAadhaarFile);
+
+                if(!photoUrl || !studentAadhaarUrl || !parentAadhaarUrl) {
+                    throw new Error("One or more document uploads failed. Please try again.");
+                }
+
+                toggleLoading(true, "Saving enrollment data...");
                 const ts = Date.now();
                 await addDoc(collection(db, "students"), {
                     ...data,
+                    photoUrl,
+                    studentAadhaarUrl,
+                    parentAadhaarUrl,
                     studentId: "STD" + ts,
                     totalPaid: 0,
                     feeHistory: [],
                     createdAt: new Date().toISOString()
                 });
-                alert("Admission Submitted Successfully!");
-                e.target.reset();
-                document.getElementById('feeDisplayBox').classList.add('hidden');
-                showSection('home');
-            } catch (err) {
-                alert("Error: " + err.message);
-            } finally {
+                
                 toggleLoading(false);
+                alert("Admission Successful! Enrollment complete.");
+                form.reset();
+                document.querySelectorAll('.preview-img').forEach(img => {
+                    img.style.display = 'none';
+                    img.src = '';
+                });
+                showSection('home');
+            } catch (err) { 
+                toggleLoading(false);
+                alert("Error during submission: " + err.message); 
             }
         };
 
         // Update Student
         document.getElementById('editStudentForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            const id = data.id;
-            delete data.id;
-
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            const id = data.id; delete data.id;
             toggleLoading(true);
-            try {
-                await updateDoc(doc(db, "students", id), data);
-                alert("Student details updated successfully!");
-                closeEditModal();
-            } catch (err) {
-                alert("Error updating student: " + err.message);
-            } finally {
-                toggleLoading(false);
+            try { await updateDoc(doc(db, "students", id), data); alert("Updated!"); closeEditModal(); } 
+            catch (err) { alert(err.message); } finally { toggleLoading(false); }
+        };
+
+        window.editStudent = (id) => {
+            const s = studentsList.find(x => x.id === id); if (!s) return;
+            const form = document.getElementById('editStudentForm');
+            form.id.value = s.id; form.name.value = s.name; form.class.value = s.class;
+            form.academicYear.value = s.academicYear; form.fatherName.value = s.fatherName;
+            form.motherName.value = s.motherName; form.dob.value = s.dob;
+            form.mobile.value = s.mobile; form.parentAadhaar.value = s.parentAadhaar;
+            document.getElementById('editModal').classList.remove('hidden');
+        };
+
+        // Staff Update Logic
+        window.editTeacher = (id) => {
+            const t = teachersList.find(x => x.id === id); if (!t) return;
+            const form = document.getElementById('editStaffForm');
+            form.id.value = t.id;
+            form.name.value = t.name;
+            form.email.value = t.email;
+            document.getElementById('editStaffModal').classList.remove('hidden');
+        };
+
+        document.getElementById('editStaffForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            const id = data.id; delete data.id;
+            toggleLoading(true, "Updating Staff Profile...");
+            try { 
+                await updateDoc(doc(db, "users", id), { name: data.name }); 
+                alert("Staff member profile updated successfully!"); 
+                closeEditStaffModal(); 
+            } catch (err) { 
+                alert("Error: " + err.message); 
+            } finally { 
+                toggleLoading(false); 
             }
         };
 
-        // Edit Student Trigger
-        window.editStudent = (id) => {
-            const s = studentsList.find(x => x.id === id);
-            if (!s) return;
-            
-            const form = document.getElementById('editStudentForm');
-            form.id.value = s.id;
-            form.name.value = s.name || '';
-            form.class.value = s.class || '';
-            form.academicYear.value = s.academicYear || currentYearStr;
-            form.fatherName.value = s.fatherName || '';
-            form.motherName.value = s.motherName || '';
-            form.dob.value = s.dob || '';
-            form.mobile.value = s.mobile || '';
-            form.parentAadhaar.value = s.parentAadhaar || '';
+        window.deleteTeacher = async (id) => {
+            if (confirm("Are you sure you want to delete this staff member? This will remove their profile record from the system.")) {
+                toggleLoading(true, "Deleting record...");
+                try {
+                    await deleteDoc(doc(db, "users", id));
+                    alert("Staff record deleted.");
+                } catch (err) {
+                    alert("Deletion failed: " + err.message);
+                } finally {
+                    toggleLoading(false);
+                }
+            }
+        };
 
-            document.getElementById('editModal').classList.remove('hidden');
+        window.editClass = (id) => {
+            const c = classesList.find(x => x.id === id); if (!c) return;
+            const form = document.getElementById('classForm');
+            if (form) {
+                form.id.value = c.id;
+                form.admFee.value = c.admissionFee;
+                form.reAdmFee.value = c.reAdmissionFee || 0;
+                form.monFee.value = c.monthlyFee;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         };
 
         // Admin Rendering
@@ -678,472 +846,313 @@
             activeAdminTab = tabId;
             ['students', 'classes', 'notices', 'teachers', 'settings'].forEach(t => {
                 const btn = document.getElementById(`tab_${t}`);
-                if (btn) {
-                    btn.className = (t === tabId) ? 
-                        'px-6 py-2.5 rounded-xl text-sm font-black transition bg-blue-600 text-white shadow-lg capitalize' : 
-                        'px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400 hover:text-slate-600 capitalize';
-                }
+                if (btn) btn.className = (t === tabId) ? 'px-6 py-2.5 rounded-xl text-sm font-black transition bg-blue-600 text-white shadow-lg capitalize' : 'px-6 py-2.5 rounded-xl text-sm font-black transition text-slate-400 hover:text-slate-600 capitalize';
             });
-
-            // Show filters only on students tab
             document.getElementById('studentFilters').style.display = (tabId === 'students') ? 'flex' : 'none';
-            
             renderAdminContent();
         };
 
         window.renderAdminContent = () => {
             const container = document.getElementById('adminContent');
             if (activeAdminTab === 'students') {
-                const yearFilter = document.getElementById('filterYear').value;
-                const classFilter = document.getElementById('filterClass').value;
-
-                const filtered = studentsList.filter(s => {
-                    const matchYear = yearFilter === 'All' || s.academicYear === yearFilter;
-                    const matchClass = classFilter === 'All' || s.class === classFilter;
-                    return matchYear && matchClass;
-                });
-
-                if (filtered.length === 0) {
-                    container.innerHTML = `<div class="text-center py-20 bg-white rounded-[2rem] border border-dashed border-slate-300">
-                        <p class="font-bold text-slate-400">No students found for this year and class.</p>
-                    </div>`;
-                    return;
-                }
+                const yF = document.getElementById('filterYear').value;
+                const cF = document.getElementById('filterClass').value;
+                const filtered = studentsList.filter(s => (yF === 'All' || s.academicYear === yF) && (cF === 'All' || s.class === cF));
 
                 container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${filtered.map(s => `
-                        <div class="bg-white p-6 rounded-[2rem] border shadow-sm hover:shadow-xl transition relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4 flex flex-col items-end gap-1">
-                                <span class="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.class}</span>
-                                <span class="bg-slate-50 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.academicYear || 'N/A'}</span>
+                    ${filtered.map(s => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm hover:shadow-xl transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 flex flex-col items-end gap-1">
+                            <span class="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.class}</span>
+                        </div>
+                        <div class="flex gap-4 items-center mb-6">
+                            <div class="h-16 w-16 rounded-2xl bg-slate-100 overflow-hidden shadow-inner flex items-center justify-center">
+                                ${s.photoUrl ? `<img src="${s.photoUrl}" class="w-full h-full object-cover">` : `<span class="text-2xl">🎓</span>`}
                             </div>
-                            <div class="flex gap-4 items-center mb-6">
-                                <div class="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl shadow-inner">🎓</div>
-                                <div><h4 class="font-black text-lg">${s.name}</h4><p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">ID: ${s.studentId}</p></div>
-                            </div>
-                            <div class="space-y-2 mb-6 text-xs font-bold text-slate-500">
-                                <div class="flex justify-between"><span>Paid:</span><span class="text-green-600 font-black">₹${s.totalPaid || 0}</span></div>
-                                <div class="flex justify-between"><span>Mobile:</span><span>${s.mobile}</span></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="viewFeeDetails('${s.id}')" class="bg-blue-600 text-white py-3 rounded-xl font-black text-xs shadow-md hover:bg-blue-700 transition">Fee Details</button>
-                                <button onclick="printBill('${s.id}')" class="bg-slate-50 py-3 rounded-xl font-black text-xs hover:bg-slate-100 transition">Statement</button>
-                                <button onclick="editStudent('${s.id}')" class="bg-blue-50 text-blue-600 py-3 rounded-xl hover:bg-blue-100 transition text-xs font-black">✏️ Edit</button>
-                                <button onclick="deleteStudent('${s.id}')" class="bg-red-50 text-red-600 py-3 rounded-xl hover:bg-red-100 transition text-xs font-black">🗑️ Del</button>
-                            </div>
-                        </div>`).join('')}
-                </div>`;
+                            <div><h4 class="font-black text-lg">${s.name}</h4><p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">${s.studentId}</p></div>
+                        </div>
+                        <div class="space-y-2 mb-6 text-xs font-bold text-slate-500">
+                            <div class="flex justify-between"><span>Paid:</span><span class="text-green-600 font-black">₹${s.totalPaid || 0}</span></div>
+                            <div class="flex justify-between"><span>Mobile:</span><span>${s.mobile}</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="viewFeeDetails('${s.id}')" class="bg-blue-600 text-white py-3 rounded-xl font-black text-xs">Details</button>
+                            <button onclick="printBill('${s.id}')" class="bg-slate-50 py-3 rounded-xl font-black text-xs">Print</button>
+                            <button onclick="editStudent('${s.id}')" class="bg-blue-50 text-blue-600 py-3 rounded-xl text-xs font-black">✏️</button>
+                            <button onclick="deleteStudent('${s.id}')" class="bg-red-50 text-red-600 py-3 rounded-xl text-xs font-black">🗑️</button>
+                        </div>
+                    </div>`).join('')}</div>`;
             } else if (activeAdminTab === 'classes') {
-                container.innerHTML = `<div class="space-y-8">
-                    <form id="classForm" class="bg-white p-8 rounded-[2rem] border shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Class Name</label><input name="id" required placeholder="e.g. 10th-A" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Admission Fee</label><input name="admFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Re-Admission Fee</label><input name="reAdmFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Monthly Fee</label><input name="monFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 transition">Save Class</button>
-                    </form>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        ${classesList.map(c => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm group">
-                            <div class="flex justify-between items-start mb-4"><h4 class="font-black text-xl">${c.id}</h4></div>
-                            <div class="text-xs space-y-2 font-bold text-slate-400">
-                                <div class="flex justify-between">Admission: <span class="text-slate-900 font-black">₹${c.admissionFee}</span></div>
-                                <div class="flex justify-between">Re-Admission: <span class="text-slate-900 font-black">₹${c.reAdmissionFee || 0}</span></div>
-                                <div class="flex justify-between">Monthly: <span class="text-slate-900 font-black">₹${c.monthlyFee}</span></div>
-                            </div>
-                        </div>`).join('')}
-                    </div>
-                </div>`;
+                container.innerHTML = `<div class="space-y-8"><form id="classForm" class="bg-white p-8 rounded-[2rem] border shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4 items-end"><div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Class Name</label><input name="id" required placeholder="e.g. 10th-A" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div><div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Admission Fee</label><input name="admFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div><div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Re-Admission Fee</label><input name="reAdmFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div><div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Monthly Fee</label><input name="monFee" type="number" required placeholder="₹" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div><button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-sm shadow-lg">Save</button></form><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">${classesList.map(c => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm group relative overflow-hidden"><button onclick="editClass('${c.id}')" class="absolute top-4 right-4 text-blue-600 hover:text-blue-800 transition">✏️</button><h4 class="font-black text-xl mb-4">${c.id}</h4><div class="text-xs space-y-2 font-bold text-slate-400"><div class="flex justify-between text-slate-900">Adm: <span>₹${c.admissionFee}</span></div><div class="flex justify-between text-slate-900">Re-Adm: <span>₹${c.reAdmissionFee || 0}</span></div><div class="flex justify-between text-slate-900">Mon: <span>₹${c.monthlyFee}</span></div></div></div>`).join('')}</div></div>`;
                 document.getElementById('classForm').onsubmit = async (e) => {
-                    e.preventDefault();
-                    const d = Object.fromEntries(new FormData(e.target).entries());
-                    await setDoc(doc(db, "classes", d.id), { 
-                        admissionFee: Number(d.admFee), 
-                        reAdmissionFee: Number(d.reAdmFee),
-                        monthlyFee: Number(d.monFee) 
-                    });
-                    alert("Class Saved");
+                    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target).entries());
+                    await setDoc(doc(db, "classes", d.id), { admissionFee: Number(d.admFee), reAdmissionFee: Number(d.reAdmFee), monthlyFee: Number(d.monFee) });
+                    alert("Saved Successfully");
                 };
             } else if (activeAdminTab === 'notices') {
-                container.innerHTML = `<div class="space-y-8">
-                    <form id="noticeForm" class="bg-white p-8 rounded-[2rem] border shadow-sm space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Notice Title</label><input name="title" id="noticeTitle" required class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                            <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Date</label><input name="date" id="noticeDate" type="date" required class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm"></div>
-                        </div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Description</label><textarea name="description" id="noticeDescription" required class="w-full p-3 bg-slate-50 rounded-xl outline-none font-bold text-sm h-32"></textarea></div>
-                        <button type="submit" id="saveNoticeBtn" class="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 transition">Post Notice</button>
-                    </form>
-                    <div class="grid grid-cols-1 gap-4">
-                        ${noticesList.map(n => `
-                            <div class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div class="flex-1">
-                                    <h4 class="font-black text-lg">${n.title}</h4>
-                                    <p class="text-xs text-slate-400 font-bold mb-2">${n.date}</p>
-                                    <p class="text-slate-600 text-sm line-clamp-2">${n.description}</p>
-                                </div>
-                                <div class="flex gap-2 shrink-0">
-                                    <button onclick="editNotice('${n.id}')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-black">✏️ Edit</button>
-                                    <button onclick="deleteNotice('${n.id}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-black">🗑️ Delete</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+                container.innerHTML = `<div class="space-y-8"><form id="noticeForm" class="bg-white p-8 rounded-[2rem] border shadow-sm space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-[9px] font-black uppercase tracking-widest">Title</label><input name="title" id="noticeTitle" required class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div><div><label class="text-[9px] font-black uppercase tracking-widest">Date</label><input name="date" id="noticeDate" type="date" required class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div></div><textarea name="description" id="noticeDescription" required placeholder="Notice body..." class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm h-32"></textarea><button type="submit" id="saveNoticeBtn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-sm shadow-lg">Post Notice</button></form><div class="grid grid-cols-1 gap-4">${noticesList.map(n => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm flex justify-between"><div><h4 class="font-black text-lg">${n.title}</h4><p class="text-[10px] text-slate-400 font-bold mb-2">${n.date}</p><p class="text-slate-600 text-sm line-clamp-2">${n.description}</p></div><div class="flex gap-2"><button onclick="editNotice('${n.id}')" class="text-blue-600 font-black">✏️</button><button onclick="deleteNotice('${n.id}')" class="text-red-600 font-black">🗑️</button></div></div>`).join('')}</div></div>`;
                 document.getElementById('noticeForm').onsubmit = async (e) => {
-                    e.preventDefault();
-                    const d = Object.fromEntries(new FormData(e.target).entries());
-                    toggleLoading(true);
-                    try {
-                        if (currentNoticeEditing) {
-                            await updateDoc(doc(db, "notices", currentNoticeEditing), d);
-                            alert("Notice Updated");
-                        } else {
-                            await addDoc(collection(db, "notices"), d);
-                            alert("Notice Posted");
-                        }
-                        e.target.reset();
-                        currentNoticeEditing = null;
-                        document.getElementById('saveNoticeBtn').innerText = "Post Notice";
-                    } catch (err) { alert(err.message); } finally { toggleLoading(false); }
+                    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target).entries()); toggleLoading(true);
+                    try { if (currentNoticeEditing) { await updateDoc(doc(db, "notices", currentNoticeEditing), d); } else { await addDoc(collection(db, "notices"), d); } e.target.reset(); currentNoticeEditing = null; } catch (err) { alert(err.message); } finally { toggleLoading(false); }
                 };
             } else if (activeAdminTab === 'teachers') {
                 container.innerHTML = `<div class="space-y-8">
                     <form id="teacherForm" class="bg-white p-8 rounded-[2rem] border shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Name</label><input name="name" required class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Email</label><input name="email" required type="email" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
-                        <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">Password</label><input name="pass" required type="password" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
-                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 transition">Create Staff</button>
+                        <div><label class="text-[9px] font-black uppercase tracking-widest">Name</label><input name="name" required class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
+                        <div><label class="text-[9px] font-black uppercase tracking-widest">Email</label><input name="email" required type="email" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
+                        <div><label class="text-[9px] font-black uppercase tracking-widest">Pass</label><input name="pass" required type="password" class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm"></div>
+                        <button type="submit" class="bg-blue-600 text-white py-3 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 transition">Add Staff</button>
                     </form>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${teachersList.map(t => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm flex justify-between items-center">
-                            <div><h4 class="font-black text-lg">${t.name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">${t.email}</p></div>
-                            <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full">Active</span>
+                        ${teachersList.map(t => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col gap-4 group hover:shadow-xl transition relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-3 flex gap-2">
+                                <button onclick="editTeacher('${t.id}')" class="bg-blue-50 text-blue-600 p-2 rounded-lg text-xs hover:bg-blue-100 transition">✏️ Edit</button>
+                                <button onclick="deleteTeacher('${t.id}')" class="bg-red-50 text-red-600 p-2 rounded-lg text-xs hover:bg-red-100 transition">🗑️ Del</button>
+                            </div>
+                            <div class="pt-6">
+                                <h4 class="font-black text-lg">${t.name}</h4>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${t.email}</p>
+                                <div class="mt-4">
+                                    <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full">Teacher Role</span>
+                                </div>
+                            </div>
                         </div>`).join('')}
                     </div>
                 </div>`;
                 document.getElementById('teacherForm').onsubmit = async (e) => {
-                    e.preventDefault();
-                    const d = Object.fromEntries(new FormData(e.target).entries());
-                    toggleLoading(true);
-                    try {
-                        const cred = await createUserWithEmailAndPassword(auth, d.email, d.pass);
-                        await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name: d.name, email: d.email, role: 'teacher', active: true });
-                        alert("Teacher Created Successfully");
-                    } catch(err) { alert(err.message); } finally { toggleLoading(false); }
+                    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target).entries()); toggleLoading(true);
+                    try { 
+                        const cred = await createUserWithEmailAndPassword(auth, d.email, d.pass); 
+                        await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name: d.name, email: d.email, role: 'teacher' }); 
+                        alert("Staff member created successfully!"); 
+                        e.target.reset();
+                    } catch(err) { 
+                        alert(err.message); 
+                    } finally { 
+                        toggleLoading(false); 
+                    }
                 };
             } else if (activeAdminTab === 'settings') {
-                container.innerHTML = `<form id="settingsForm" class="bg-white p-10 rounded-[2.5rem] border shadow-sm max-w-2xl mx-auto space-y-8">
-                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">School Name</label><input name="name" value="${schoolSettings.name}" required class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-blue-600 outline-none"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Address</label><textarea name="address" required class="w-full p-4 bg-slate-50 rounded-2xl font-bold h-24 border-2 border-transparent focus:border-blue-600 outline-none">${schoolSettings.address}</textarea></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Principal Name</label><input name="principalName" value="${schoolSettings.principalName}" required class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-blue-600 outline-none"></div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition">Update Identity</button>
-                </form>`;
+                container.innerHTML = `
+                <div class="max-w-2xl mx-auto">
+                    <form id="settingsForm" class="bg-white p-8 rounded-[2.5rem] border shadow-sm space-y-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-black">School Settings</h3>
+                            <div class="h-16 w-16 rounded-2xl bg-slate-50 overflow-hidden border">
+                                <img id="settingsLogoPreview" src="${schoolSettings.logoUrl}" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">School Logo</label>
+                            <div class="file-upload-box" onclick="this.querySelector('input').click()">
+                                <div class="text-center p-4">
+                                    <span class="text-2xl">🖼️</span>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Change School Logo</p>
+                                </div>
+                                <input type="file" id="schoolLogoInput" accept="image/*" onchange="previewFile(this, 'settingsLogoPreview')">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">School Name</label>
+                            <input name="name" value="${schoolSettings.name}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Address</label>
+                            <input name="address" value="${schoolSettings.address}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Helpline Number</label>
+                            <input name="helpline" value="${schoolSettings.helpline || ''}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition">Update School Profile</button>
+                    </form>
+                </div>`;
                 document.getElementById('settingsForm').onsubmit = async (e) => {
                     e.preventDefault();
-                    const d = Object.fromEntries(new FormData(e.target).entries());
-                    await setDoc(doc(db, "config", "school"), d);
-                    alert("Settings Updated");
+                    const form = e.target;
+                    const d = Object.fromEntries(new FormData(form).entries());
+                    const logoInput = document.getElementById('schoolLogoInput');
+                    
+                    toggleLoading(true, "Updating School Profile...");
+                    try {
+                        let logoUrl = schoolSettings.logoUrl;
+                        if (logoInput.files[0]) {
+                            toggleLoading(true, "Uploading new logo...");
+                            const uploadedLogo = await uploadToImgBB(logoInput.files[0]);
+                            if (uploadedLogo) logoUrl = uploadedLogo;
+                        }
+                        
+                        await setDoc(doc(db, "config", "school"), {
+                            ...schoolSettings,
+                            name: d.name,
+                            address: d.address,
+                            helpline: d.helpline,
+                            logoUrl: logoUrl
+                        });
+                        alert("School Settings Updated Successfully!");
+                    } catch (err) {
+                        alert("Update Failed: " + err.message);
+                    } finally {
+                        toggleLoading(false);
+                    }
                 };
             }
         };
 
-        window.editNotice = (id) => {
-            const n = noticesList.find(x => x.id === id);
-            if (!n) return;
-            currentNoticeEditing = id;
-            document.getElementById('noticeTitle').value = n.title;
-            document.getElementById('noticeDate').value = n.date;
-            document.getElementById('noticeDescription').value = n.description;
-            document.getElementById('saveNoticeBtn').innerText = "Update Notice";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.deleteNotice = async (id) => {
-            if (confirm("Delete this notice?")) {
-                await deleteDoc(doc(db, "notices", id));
-            }
-        };
-
-        // Fee Management UI
         window.viewFeeDetails = (id) => {
-            const s = studentsList.find(x => x.id === id);
-            if (!s) return;
+            const s = studentsList.find(x => x.id === id); if (!s) return;
             const c = classesList.find(x => x.id === s.class);
-            const modal = document.getElementById('feeModal');
             const content = document.getElementById('feeModalContent');
-
             const history = s.feeHistory || [];
             
-            // Calculate Admission Paid
-            const totalAdmissionPaid = history.filter(h => h.type === 'admission').reduce((sum, h) => sum + h.amount, 0);
-            const totalReAdmissionPaid = history.filter(h => h.type === 're-admission').reduce((sum, h) => sum + h.amount, 0);
-            const admissionExpected = c ? c.admissionFee : 0;
-            const reAdmissionExpected = c ? (c.reAdmissionFee || 0) : 0;
-            const admissionDue = Math.max(0, admissionExpected - totalAdmissionPaid);
-            const reAdmissionDue = Math.max(0, reAdmissionExpected - totalReAdmissionPaid);
-            
-            // Calculate monthly statuses
+            const totalAdmPaid = history.filter(h => h.type === 'admission').reduce((sum, h) => sum + h.amount, 0);
+            const totalReAdmPaid = history.filter(h => h.type === 're-admission').reduce((sum, h) => sum + h.amount, 0);
+            const admExp = c ? c.admissionFee : 0;
+            const reAdmExp = c ? (c.reAdmissionFee || 0) : 0;
+
             const monthlyStatus = monthsOrder.map(m => {
                 const payments = history.filter(h => h.type === 'monthly' && h.month === m);
-                const totalMonthPaid = payments.reduce((sum, h) => sum + h.amount, 0);
-                const monthExpected = c ? c.monthlyFee : 0;
-                const monthDue = Math.max(0, monthExpected - totalMonthPaid);
-                return { 
-                    month: m, 
-                    paid: totalMonthPaid >= monthExpected && monthExpected > 0, 
-                    totalPaid: totalMonthPaid, 
-                    due: monthDue,
-                    details: payments[0] // just show the first payment date
-                };
+                const totalPaid = payments.reduce((sum, h) => sum + h.amount, 0);
+                const exp = c ? c.monthlyFee : 0;
+                return { month: m, paid: totalPaid >= exp && exp > 0, total: totalPaid, due: Math.max(0, exp - totalPaid) };
             });
 
             content.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Admission & Re-Admission -->
-                    <div class="space-y-6">
-                        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                            <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest mb-4">Account Summary</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between font-bold"><span>Life-time Total Paid:</span><span class="text-green-600">₹${s.totalPaid || 0}</span></div>
-                                <div class="flex justify-between font-bold"><span>Academic Year:</span><span>${s.academicYear}</span></div>
-                                <div class="flex justify-between font-bold"><span>Class:</span><span>${s.class}</span></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Profile & Summary -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col md:flex-row gap-6">
+                            <div class="h-32 w-32 rounded-2xl bg-white shadow-md overflow-hidden flex items-center justify-center shrink-0 border-4 border-white">
+                                ${s.photoUrl ? `<img src="${s.photoUrl}" class="w-full h-full object-cover">` : `<span class="text-5xl">🎓</span>`}
+                            </div>
+                            <div class="flex-1 space-y-2">
+                                <h3 class="text-3xl font-black text-slate-800">${s.name}</h3>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest">${s.studentId}</span>
+                                    <span class="px-3 py-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">Class ${s.class}</span>
+                                </div>
+                                <div class="pt-4 grid grid-cols-2 gap-4 text-sm font-bold text-slate-500">
+                                    <p>Father: <span class="text-slate-800">${s.fatherName}</span></p>
+                                    <p>Mobile: <span class="text-slate-800">${s.mobile}</span></p>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Fixed Fees Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="p-6 rounded-3xl border-2 ${admissionDue === 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
-                                <h4 class="font-black text-sm uppercase mb-2">Admission Fee</h4>
-                                <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Paid: <span class="text-slate-900">₹${totalAdmissionPaid}</span></p>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Due: <span class="text-red-600">₹${admissionDue}</span></p>
-                                    <div class="mt-3">
-                                        <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${admissionDue === 0 ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">
-                                            ${admissionDue === 0 ? 'Full Paid' : 'Pending'}
-                                        </span>
+                        <!-- Documents Section -->
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-black uppercase text-slate-400 tracking-widest px-2">Identity Documents</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase text-center">Student Aadhaar</p>
+                                    <div class="doc-preview-container cursor-pointer" onclick="window.open('${s.studentAadhaarUrl}', '_blank')">
+                                        ${s.studentAadhaarUrl ? `<img src="${s.studentAadhaarUrl}" class="w-full h-48 object-contain bg-slate-200">` : `<div class="h-48 flex items-center justify-center text-slate-400 italic">No Image</div>`}
+                                        <div class="p-2 text-center text-[10px] font-black text-blue-600 uppercase bg-blue-50">View Full Document</div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase text-center">Parent Aadhaar</p>
+                                    <div class="doc-preview-container cursor-pointer" onclick="window.open('${s.parentAadhaarUrl}', '_blank')">
+                                        ${s.parentAadhaarUrl ? `<img src="${s.parentAadhaarUrl}" class="w-full h-48 object-contain bg-slate-200">` : `<div class="h-48 flex items-center justify-center text-slate-400 italic">No Image</div>`}
+                                        <div class="p-2 text-center text-[10px] font-black text-blue-600 uppercase bg-blue-50">View Full Document</div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="p-6 rounded-3xl border-2 ${reAdmissionDue === 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
+                        <!-- Admission Status -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-6 rounded-3xl border-2 ${totalAdmPaid >= admExp ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
+                                <h4 class="font-black text-sm uppercase mb-2">Admission Fee</h4>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Paid: ₹${totalAdmPaid} / Due: ₹${Math.max(0, admExp - totalAdmPaid)}</p>
+                                    <span class="text-xl">${totalAdmPaid >= admExp ? '✅' : '⚠️'}</span>
+                                </div>
+                            </div>
+                            <div class="p-6 rounded-3xl border-2 ${totalReAdmPaid >= reAdmExp ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
                                 <h4 class="font-black text-sm uppercase mb-2">Re-Admission</h4>
-                                <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Paid: <span class="text-slate-900">₹${totalReAdmissionPaid}</span></p>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Due: <span class="text-red-600">₹${reAdmissionDue}</span></p>
-                                    <div class="mt-3">
-                                        <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${reAdmissionDue === 0 ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">
-                                            ${reAdmissionDue === 0 ? 'Full Paid' : 'Pending'}
-                                        </span>
-                                    </div>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Paid: ₹${totalReAdmPaid} / Due: ₹${Math.max(0, reAdmExp - totalReAdmPaid)}</p>
+                                    <span class="text-xl">${totalReAdmPaid >= reAdmExp ? '✅' : '⚠️'}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Monthly Tracker -->
-                    <div class="bg-white border rounded-3xl overflow-hidden">
-                        <h3 class="bg-slate-50 p-4 text-xs font-black uppercase text-slate-400 tracking-widest border-b flex justify-between">
-                            Monthly Tracker <span>₹${c ? c.monthlyFee : 0}/mo</span>
-                        </h3>
-                        <div class="p-3 grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
+                    <div class="bg-white border rounded-3xl overflow-hidden shadow-sm">
+                        <h3 class="bg-slate-50 p-4 text-xs font-black uppercase text-slate-400 tracking-widest border-b">Monthly Fee Tracker</h3>
+                        <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto">
                             ${monthlyStatus.map(m => `
-                                <div class="flex items-center justify-between p-3 rounded-2xl border ${m.paid ? 'bg-green-50 border-green-100' : (m.totalPaid > 0 ? 'bg-yellow-50 border-yellow-100' : 'bg-slate-50 border-slate-100')}">
+                                <div class="flex items-center justify-between p-3 rounded-2xl border ${m.paid ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-100'}">
                                     <div>
                                         <p class="text-xs font-black text-slate-800">${m.month}</p>
-                                        <p class="text-[8px] font-bold ${m.paid ? 'text-green-600' : 'text-slate-400'}">
-                                            ${m.paid ? 'Full Paid' : (m.totalPaid > 0 ? `Paid ₹${m.totalPaid}, Due ₹${m.due}` : 'Pending')}
-                                        </p>
+                                        <p class="text-[9px] font-bold ${m.paid ? 'text-green-600' : 'text-slate-400'}">${m.paid ? 'Full Paid' : `Due ₹${m.due}`}</p>
                                     </div>
-                                    <span class="text-lg">${m.paid ? '✅' : (m.totalPaid > 0 ? '⏳' : '❌')}</span>
+                                    <span class="text-lg">${m.paid ? '✅' : '⏳'}</span>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
                 </div>
-
-                <!-- Detailed History Table -->
-                <div class="space-y-4">
-                    <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest">Full Payment History</h3>
-                    <div class="bg-white border rounded-3xl overflow-hidden">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 border-b">
-                                <tr>
-                                    <th class="p-4 font-black uppercase text-slate-400">Date</th>
-                                    <th class="p-4 font-black uppercase text-slate-400">Type</th>
-                                    <th class="p-4 font-black uppercase text-slate-400 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y">
-                                ${history.length > 0 ? history.map(h => `
-                                    <tr>
-                                        <td class="p-4 font-bold text-slate-600">${h.date.split('T')[0]}</td>
-                                        <td class="p-4 font-black uppercase"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600">${h.type}${h.month ? ` (${h.month})` : ''}</span></td>
-                                        <td class="p-4 font-black text-right">₹${h.amount}</td>
-                                    </tr>
-                                `).join('') : `<tr><td colspan="3" class="p-10 text-center text-slate-400 italic">No payments recorded.</td></tr>`}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             `;
-
-            modal.classList.remove('hidden');
+            document.getElementById('feeModal').classList.remove('hidden');
         };
 
-        // Teacher Content Rendering
         window.renderTeacherContent = () => {
             const container = document.getElementById('teacherContent');
             if (!container) return;
-
-            const yearFilter = document.getElementById('teacherFilterYear').value;
-            const classFilter = document.getElementById('teacherFilterClass').value;
-
-            const filtered = studentsList.filter(s => {
-                const matchYear = yearFilter === 'All' || s.academicYear === yearFilter;
-                const matchClass = classFilter === 'All' || s.class === classFilter;
-                return matchYear && matchClass;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-20 bg-white rounded-[2rem] border border-dashed border-slate-300">
-                    <p class="font-bold text-slate-400">No students available for selection.</p>
-                </div>`;
-                return;
-            }
+            const yF = document.getElementById('teacherFilterYear').value;
+            const cF = document.getElementById('teacherFilterClass').value;
+            const filtered = studentsList.filter(s => (yF === 'All' || s.academicYear === yF) && (cF === 'All' || s.class === cF));
 
             container.innerHTML = filtered.map(s => `<div class="bg-white p-6 rounded-[2rem] border shadow-sm hover:shadow-xl transition relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-4 flex flex-col items-end gap-1">
-                    <span class="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.class}</span>
-                    <span class="bg-slate-50 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.academicYear || 'N/A'}</span>
-                </div>
+                <div class="absolute top-0 right-0 p-4"><span class="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">${s.class}</span></div>
                 <div class="flex gap-4 items-center mb-6">
-                    <div class="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-black">🎓</div>
+                    <div class="h-16 w-16 rounded-2xl bg-blue-50 overflow-hidden shadow-inner flex items-center justify-center border border-white">
+                        ${s.photoUrl ? `<img src="${s.photoUrl}" class="w-full h-full object-cover">` : `<span class="text-xl">🎓</span>`}
+                    </div>
                     <div><h4 class="font-black text-lg">${s.name}</h4><p class="text-[10px] font-black uppercase text-blue-600 tracking-widest">${s.studentId}</p></div>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Paid</span><span class="text-xl font-black text-slate-900">₹${s.totalPaid || 0}</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="viewFeeDetails('${s.id}')" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-black text-xs hover:bg-slate-200 transition">History</button>
-                        <button onclick="openCollectFeeModal('${s.id}')" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black text-xs hover:bg-blue-700 shadow-lg transition">Collect Fee</button>
-                    </div>
+                <div class="flex gap-2">
+                    <button onclick="viewFeeDetails('${s.id}')" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-black text-xs hover:bg-slate-200 transition">View Profile</button>
+                    <button onclick="openCollectFeeModal('${s.id}')" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Collect Fee</button>
                 </div>
             </div>`).join('');
         };
 
         window.openCollectFeeModal = (id) => {
-            const s = studentsList.find(x => x.id === id);
-            const c = classesList.find(x => x.id === s.class);
             const form = document.getElementById('paymentForm');
             form.studentId.value = id;
-            
-            // Default to monthly type and update field
             document.getElementById('paymentType').value = 'monthly';
             toggleMonthSelect();
-            
             document.getElementById('collectFeeModal').classList.remove('hidden');
         };
 
         document.getElementById('paymentForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const d = Object.fromEntries(formData.entries());
-            const id = d.studentId;
-            
-            toggleLoading(true);
+            e.preventDefault(); const d = Object.fromEntries(new FormData(e.target).entries()); toggleLoading(true);
             try {
-                const student = studentsList.find(x => x.id === id);
-                const history = [...(student.feeHistory || [])];
-                
-                const newEntry = {
-                    amount: Number(d.amount),
-                    date: new Date().toISOString(),
-                    type: d.type,
-                    month: d.type === 'monthly' ? d.month : null
-                };
-                
-                history.push(newEntry);
-                
-                await updateDoc(doc(db, "students", id), { 
-                    totalPaid: (student.totalPaid || 0) + Number(d.amount),
-                    feeHistory: history 
-                });
-                
-                alert("Payment Recorded!");
-                closeCollectFeeModal();
-                e.target.reset();
-            } catch (err) {
-                alert("Error recording payment: " + err.message);
-            } finally {
-                toggleLoading(false);
-            }
+                const s = studentsList.find(x => x.id === d.studentId);
+                const history = [...(s.feeHistory || [])];
+                history.push({ amount: Number(d.amount), date: new Date().toISOString(), type: d.type, month: d.type === 'monthly' ? d.month : null });
+                await updateDoc(doc(db, "students", d.studentId), { totalPaid: (s.totalPaid || 0) + Number(d.amount), feeHistory: history });
+                alert("Payment Recorded!"); closeCollectFeeModal(); e.target.reset();
+            } catch (err) { alert(err.message); } finally { toggleLoading(false); }
         };
 
-        window.deleteStudent = async (id) => {
-            if (confirm("Delete this student permanently?")) {
-                await deleteDoc(doc(db, "students", id));
-            }
-        };
+        window.deleteStudent = async (id) => { if (confirm("Delete student?")) { await deleteDoc(doc(db, "students", id)); } };
 
-        // Receipt Printing
         window.printBill = (id) => {
             const s = studentsList.find(x => x.id === id);
             const receipt = document.getElementById('receiptSection');
-            receipt.innerHTML = `
-                <div class="max-w-2xl mx-auto border-4 border-slate-900 p-8 rounded-lg relative">
-                    <div class="flex justify-between border-b-4 border-slate-900 pb-6 mb-8">
-                        <div>
-                            <h1 class="text-3xl font-black uppercase">${schoolSettings.name}</h1>
-                            <p class="text-sm font-bold text-slate-500">${schoolSettings.address}</p>
-                        </div>
-                        <div class="text-right">
-                            <h2 class="text-xl font-black text-slate-400 uppercase tracking-widest">Receipt</h2>
-                            <p class="text-xs font-bold">No: ${s.studentId}</p>
-                            <p class="text-xs font-black">Session: ${s.academicYear || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-8 mb-10">
-                        <div>
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Student Details</p>
-                            <h4 class="text-xl font-black">${s.name}</h4>
-                            <p class="text-sm font-bold text-slate-500">Class: ${s.class}</p>
-                            <p class="text-sm font-bold text-slate-500">Parents Aadhaar: ${s.parentAadhaar}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total Received</p>
-                            <h4 class="text-4xl font-black">₹${s.totalPaid || 0}</h4>
-                        </div>
-                    </div>
-                    <table class="w-full mb-10">
-                        <thead>
-                            <tr class="border-y text-left text-[10px] font-black text-slate-400 uppercase">
-                                <th class="py-2">Description</th>
-                                <th class="py-2 text-right">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y">
-                            ${(s.feeHistory || []).map(h => `
-                                <tr class="text-sm">
-                                    <td class="py-3 font-bold">${h.type.toUpperCase()} FEE ${h.month ? `(${h.month})` : ''} - ${h.date.split('T')[0]}</td>
-                                    <td class="py-3 text-right font-black">₹${h.amount}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div class="flex justify-between items-end mt-20">
-                        <div class="text-[9px] text-slate-400 italic">Generated on ${new Date().toLocaleString()}</div>
-                        <div class="text-center w-48 border-t-2 border-slate-900 pt-1">
-                            <p class="font-black text-sm uppercase">${schoolSettings.principalName}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Principal Signature</p>
-                        </div>
-                    </div>
-                </div>`;
+            receipt.innerHTML = `<div class="max-w-2xl mx-auto border-4 border-slate-900 p-8 rounded-lg">
+                <div class="flex justify-between border-b-4 border-slate-900 pb-6 mb-8"><div><h1 class="text-3xl font-black uppercase">${schoolSettings.name}</h1><p class="text-sm font-bold text-slate-500">${schoolSettings.address}</p></div><div class="text-right"><h2 class="text-xl font-black text-slate-400 uppercase">Receipt</h2><p class="text-xs font-bold">${s.studentId}</p></div></div>
+                <div class="grid grid-cols-2 gap-8 mb-10"><div><h4 class="text-xl font-black">${s.name}</h4><p class="text-sm font-bold text-slate-500">Class: ${s.class}</p></div><div class="text-right"><p class="text-[10px] font-black uppercase">Total Received</p><h4 class="text-4xl font-black">₹${s.totalPaid || 0}</h4></div></div>
+                <table class="w-full mb-10"><thead class="border-y"><tr class="text-left text-[10px] font-black uppercase text-slate-400"><th class="py-2">Fee Description</th><th class="py-2 text-right">Amount</th></tr></thead><tbody class="divide-y">${(s.feeHistory || []).map(h => `<tr class="text-sm"><td class="py-3 font-bold">${h.type.toUpperCase()} ${h.month ? `(${h.month})` : ''} - ${h.date.split('T')[0]}</td><td class="py-3 text-right font-black">₹${h.amount}</td></tr>`).join('')}</tbody></table>
+            </div>`;
             window.print();
         };
 
-        // Initialization
         initDataSync();
         adminTab('students');
-
     </script>
 </body>
 </html>
