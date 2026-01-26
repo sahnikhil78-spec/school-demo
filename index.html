@@ -382,9 +382,9 @@
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Parent Aadhaar</label>
                             <div class="file-upload-box" onclick="this.querySelector('input').click()">
                                 <img id="parentAadhaarPreview" class="preview-img">
-                                <div class=\"text-center p-4\">
-                                    <span class=\"text-2xl\">👤</span>
-                                    <p class=\"text-[10px] font-bold text-slate-400 uppercase mt-1\">Parent Aadhaar</p>
+                                <div class="text-center p-4">
+                                    <span class="text-2xl">👤</span>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Parent Aadhaar</p>
                                 </div>
                                 <input type="file" id="parentAadhaarInput" accept="image/*" onchange="previewFile(this, 'parentAadhaarPreview')" required>
                             </div>
@@ -854,6 +854,7 @@
 
         window.renderAdminContent = () => {
             const container = document.getElementById('adminContent');
+            if (!container) return;
             if (activeAdminTab === 'students') {
                 const yF = document.getElementById('filterYear').value;
                 const cF = document.getElementById('filterClass').value;
@@ -933,64 +934,71 @@
                 };
             } else if (activeAdminTab === 'settings') {
                 container.innerHTML = `
-                <div class="max-w-2xl mx-auto">
+                <div class="max-w-2xl mx-auto animate-fade">
                     <form id="settingsForm" class="bg-white p-8 rounded-[2.5rem] border shadow-sm space-y-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-2xl font-black">School Settings</h3>
-                            <div class="h-16 w-16 rounded-2xl bg-slate-50 overflow-hidden border">
-                                <img id="settingsLogoPreview" src="${schoolSettings.logoUrl}" class="w-full h-full object-cover">
+                            <div class="h-20 w-20 rounded-2xl bg-slate-50 overflow-hidden border-2 border-slate-100 shadow-inner">
+                                <img id="settingsLogoPreview" src="${schoolSettings.logoUrl || 'https://via.placeholder.com/150'}" class="w-full h-full object-cover">
                             </div>
                         </div>
+                        
                         <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">School Logo</label>
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">School Logo</label>
                             <div class="file-upload-box" onclick="this.querySelector('input').click()">
                                 <div class="text-center p-4">
                                     <span class="text-2xl">🖼️</span>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Change School Logo</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Upload New Logo</p>
                                 </div>
                                 <input type="file" id="schoolLogoInput" accept="image/*" onchange="previewFile(this, 'settingsLogoPreview')">
                             </div>
                         </div>
+
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">School Name</label>
                             <input name="name" value="${schoolSettings.name}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Address</label>
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Full Address</label>
                             <input name="address" value="${schoolSettings.address}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Helpline Number</label>
-                            <input name="helpline" value="${schoolSettings.helpline || ''}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition">
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Public Helpline Number</label>
+                            <input name="helpline" value="${schoolSettings.helpline || ''}" required class="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-bold transition" placeholder="e.g. +91 9876543210">
                         </div>
-                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition">Update School Profile</button>
+                        
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition-all">Save Changes</button>
                     </form>
                 </div>`;
+
                 document.getElementById('settingsForm').onsubmit = async (e) => {
                     e.preventDefault();
                     const form = e.target;
-                    const d = Object.fromEntries(new FormData(form).entries());
+                    const formData = Object.fromEntries(new FormData(form).entries());
                     const logoInput = document.getElementById('schoolLogoInput');
                     
-                    toggleLoading(true, "Updating School Profile...");
+                    toggleLoading(true, "Saving Settings...");
                     try {
-                        let logoUrl = schoolSettings.logoUrl;
-                        if (logoInput.files[0]) {
-                            toggleLoading(true, "Uploading new logo...");
-                            const uploadedLogo = await uploadToImgBB(logoInput.files[0]);
-                            if (uploadedLogo) logoUrl = uploadedLogo;
+                        let finalLogoUrl = schoolSettings.logoUrl;
+                        if (logoInput && logoInput.files && logoInput.files[0]) {
+                            toggleLoading(true, "Uploading Logo to Server...");
+                            const uploaded = await uploadToImgBB(logoInput.files[0]);
+                            if (uploaded) finalLogoUrl = uploaded;
+                            else throw new Error("Logo upload failed. Please check your connection.");
                         }
                         
                         await setDoc(doc(db, "config", "school"), {
                             ...schoolSettings,
-                            name: d.name,
-                            address: d.address,
-                            helpline: d.helpline,
-                            logoUrl: logoUrl
+                            name: formData.name,
+                            address: formData.address,
+                            helpline: formData.helpline,
+                            logoUrl: finalLogoUrl
                         });
+                        
                         alert("School Settings Updated Successfully!");
                     } catch (err) {
-                        alert("Update Failed: " + err.message);
+                        console.error("Settings Update Error:", err);
+                        alert("Error: " + err.message);
                     } finally {
                         toggleLoading(false);
                     }
